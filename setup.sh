@@ -76,6 +76,8 @@ until [[ "$launch_playbook" =~ ^[yYnN]*$ ]]; do
 				read -p "[y/N]: " launch_playbook
 done
 
+cd ansible
+
 if [[ "$launch_playbook" =~ ^[yY]$ ]]; then
   ansible-playbook run.yml
   exit
