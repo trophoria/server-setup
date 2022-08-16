@@ -60,11 +60,91 @@ if [[ "$launch_playbook" =~ ^[yY]$ ]]; then
   export DEBIAN_FRONTEND=
 fi
 
-# ssh-keygen -t ed25519 -C "tobi.kaerst@gmx.de"
-
 
 # ------ CONFIGURATION GUIDE  ------
 
+# create ssh key and save it to env
+
+echo
+read -p "Do you want to generate a ssh public key for the connection? [y/N]: " generate_ssh
+until [[ "$generate_ssh" =~ ^[yYnN]*$ ]]; do
+				echo "$generate_ssh: invalid selection."
+				read -p "[y/N]: " generate_ssh
+done
+
+if [[ "$generate_ssh" =~ ^[yY]$ ]]; then
+  echo;  echo "Please enter your email address:";
+  read -p "Email: " email_input
+
+  ssh-keygen -t ed25519 -C $email_input -f ~/.ssh/trophoria_id -q -N ""
+  public_key=$(cat ~/.ssh/trophoria_id.pub)
+  escaped_key=$(printf '%s\n' "$public_key" | sed -e 's/[\/&]/\\&/g')
+  sed "s/{{ SSH_PUBLIC_KEY }}/$escaped_key/g" ./ansible/inventory.yml > ./ansible/_inventory.yml && mv ./ansible/_inventory.yml ./ansible/inventory.yml
+fi
+
+# setup up the rest of the env
+
+cp -n ./ansible/templates/inventory.template.yml ./ansible/inventory.yml
+
+keys=( 
+    "HOST_IP" 
+    "HOSTNAME" 
+    "SSH_USER" 
+    "SSH_PASSWORD" 
+    "SSH_PORT" 
+    "USERNAME" 
+    "USER_PASSWORD" 
+    "POSTGRES_USER" 
+    "POSTGRES_PASSWORD" 
+    "POSTGRES_TEST_USER"
+    "POSTGRES_TEST_PASSWORD"
+    "REDIS_PASSWORD"
+)
+
+desc=( 
+    "Enter the ip adress of the remote server"
+    "Enter the hostname of the remote server"
+    "Enter your temporary/initial ssh user name"
+    "Enter your temporary/initial ssh password"
+    "Enter the desired ssh connection port"
+    "Enter your desired UNIX username"
+    "Enter your password of the UNIX user"
+    "Enter the name of the postgres user"
+    "Enter the password of the postgres database"
+    "Enter the name of the postgres user for the test database"
+    "Enter the password of the postgres user for the test database"
+    "Enter the password of the redis server"
+)
+
+label=( 
+    "Host IP: " 
+    "Hostname: "
+    "Temporary SSH Username: " 
+    "Temporary SSH Password: " 
+    "SSH port: "
+    "UNIX Username: "
+    "UNIX Password: "
+    "Posgtres username: "
+    "Postgres password: "
+    "Postgres test username: "
+    "Postgres test password: "
+    "Redis password: "
+)
+
+username = ""
+
+for (( i=0; i<${#keys[@]}; i++ ));
+do
+    if grep -q "{{ ${keys[$i]} }}" "ansible/inventory.yml"; then
+        echo;  echo "${desc[$i]}";
+        read -p "${label[$i]}" input
+        sed "s/{{ ${keys[$i]} }}/$input/g" ./ansible/inventory.yml > ./ansible/_inventory.yml && mv ./ansible/_inventory.yml ./ansible/inventory.yml
+    
+        if [ "${keys[$i]}" = "USERNAME" ]; then
+          username = input
+        fi
+    fi
+done
 
 
 # ------ RUN THE PLAYBOOK ------
@@ -80,23 +160,27 @@ cd ansible
 
 if [[ "$launch_playbook" =~ ^[yY]$ ]]; then
   ansible-playbook run.yml
-  exit
+else 
+  echo
+  read -p "Would you like to start only the services now? [y/N]: " launch_services
+  until [[ "$launch_services" =~ ^[yYnN]*$ ]]; do
+          echo "$launch_services: invalid selection."
+          read -p "[y/N]: " launch_services
+  done
+
+  if [[ "$launch_services" =~ ^[yY]$ ]]; then
+    ansible-playbook run-services.yml
+  else 
+    echo "Still testing connections..."
+    ansible all -m ping
+    echo "You can run the playbook by executing the following command"
+    echo "ansible-playbook run.yml"
+  fi
 fi
 
-echo
-read -p "Would you like to start only the services now? [y/N]: " launch_services
-until [[ "$launch_services" =~ ^[yYnN]*$ ]]; do
-				echo "$launch_services: invalid selection."
-				read -p "[y/N]: " launch_services
-done
 
-if [[ "$launch_services" =~ ^[yY]$ ]]; then
-  ansible-playbook run-services.yml
-  exit
-fi
+# ------ CONFIGURE AFTER PLAYBOOK ------
 
-echo "Still testing connections..."
-ansible all -m ping
-echo "You can run the playbook by executing the following command"
-echo "ansible-playbook run.yml"
-exit
+# Disable temp user/password authentication
+sed "s/ansible_ssh_user:.*$/ansible_ssh_user: $username/g" ./ansible/inventory.yml > ./ansible/_inventory.yml && mv ./ansible/_inventory.yml ./ansible/inventory.yml
+sed "s/ansible_ssh_pass:.*$/ansible_ssh_private_key_file: ~\/.ssh\/trophoria_id/g" ./ansible/inventory.yml > ./ansible/_inventory.yml && mv ./ansible/_inventory.yml ./ansible/inventory.yml
