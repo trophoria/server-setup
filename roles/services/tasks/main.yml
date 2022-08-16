@@ -1,102 +1,100 @@
-- hosts: all
-  tasks:
-    - name: Create the traefik directory
-      file:
-        path: "/etc/traefik"
-        state: directory
-        owner: "{{ username }}"
-        group: "{{ username }}"
+- name: Create the traefik directory
+  file:
+    path: "/etc/traefik"
+    state: directory
+    owner: "{{ username }}"
+    group: "{{ username }}"
 
-    - name: Copy traefik.yaml file
-      template:
-        src: "traefik.yml.j2"
-        dest: "/etc/traefik/traefik.yml"
+- name: Copy traefik.yaml file
+  template:
+    src: "traefik.yml.j2"
+    dest: "/etc/traefik/traefik.yml"
 
-    - name: Deploy docker compopse stack
-      docker_compose:
-        project_name: achiever-stack
-        definition:
-          version: '3'
-          services:
-            traefik:
-              image: "traefik:latest"
-              container_name: "traefik"
-              restart: unless-stopped
-              ports:
-                - "80:80"
-                - "443:443"
-              networks:
-                - server_network
-              volumes:
-                - /etc/traefik:/etc/traefik
-                - /var/run/docker.sock:/var/run/docker.sock:ro
-
-            watchtower:
-              image: "containrrr/watchtower"
-              container_name: "watchtower"
-              restart: unless-stopped
-              command: --schedule "* */15 * * * *"
-              volumes:
-                - /var/run/docker.sock:/var/run/docker.sock
-
-            postgres:
-              image: "postgres:alpine"
-              container_name: "postgres"
-              restart: unless-stopped
-              environment:
-                "POSTGRES_USER": "{{ postgres_user }}"
-                "POSTGRES_PASSWORD": "{{ postgres_password }}"
-                "POSTGRES_DB": "{{ postgres_db }}"
-              networks:
-                - server_network
-              volumes:
-                - "{{ docker_dir }}/postgres:/etc/postgres"
-
-            postgres-test:
-              image: "postgres:alpine"
-              container_name: "postgres"
-              restart: unless-stopped
-              environment:
-                "POSTGRES_USER": "{{ postgres_test_user }}"
-                "POSTGRES_PASSWORD": "{{ postgres_test_password }}"
-                "POSTGRES_DB": "{{ postgres_test_db }}"
-              ports:
-                - "{{ postgres_test_port }}:5432"
-
-            redis:
-              image: "trophoria/trophoria-cache:latest"
-              container_name: "redis"
-              restart: unless-stopped
-              privileged: true
-              command: sh init-redis.sh {{ redis_password }}
-              networks:
-                - server_network
-              volumes:
-                - "{{ docker_dir }}/redis:/etc/redis"
-
-            achiever:
-              image: "trophoria/trophoria-api:latest"
-              container_name: "achiever"
-              restart: unless-stopped
-              environment:
-                "DATABASE_URL": "{{ database_url }}"
-                "REDIS_PASSWORD": "{{ redis_password }}"
-                "REDIS_PORT": "{{ redis_port }}"
-                "REDIS_TTL": "{{ redis_ttl }}"
-                "REDIS_HOST": "{{ redis_host }}"
-                "PORT": "{{ api_port }} "
-              labels:
-                traefik.enable: true
-                traefik.http.routers.achiever.entrypoints: web, websecure
-                traefik.http.routers.achiever.rule: Host("{{ root_host }}") # && PathPrefix("/achiever")
-                traefik.http.routers.achiever.tls: true
-                traefik.http.routers.achiever.tls.certresolver: production
-              networks:
-                - server_network
-              depends_on:
-                  - redis
-                  - postgres
-
+- name: Deploy docker compopse stack
+  docker_compose:
+    project_name: achiever-stack
+    definition:
+      version: '3'
+      services:
+        traefik:
+          image: "traefik:latest"
+          container_name: "traefik"
+          restart: unless-stopped
+          ports:
+            - "80:80"
+            - "443:443"
           networks:
-            server_network:
-              driver: bridge
+            - server_network
+          volumes:
+            - /etc/traefik:/etc/traefik
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+
+        watchtower:
+          image: "containrrr/watchtower"
+          container_name: "watchtower"
+          restart: unless-stopped
+          command: --schedule "* */15 * * * *"
+          volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+
+        postgres:
+          image: "postgres:alpine"
+          container_name: "postgres"
+          restart: unless-stopped
+          environment:
+            "POSTGRES_USER": "{{ postgres_user }}"
+            "POSTGRES_PASSWORD": "{{ postgres_password }}"
+            "POSTGRES_DB": "{{ postgres_db }}"
+          networks:
+            - server_network
+          volumes:
+            - "{{ docker_dir }}/postgres:/etc/postgres"
+
+        postgres_test:
+          image: "postgres:alpine"
+          container_name: "postgres_test"
+          restart: unless-stopped
+          environment:
+            "POSTGRES_USER": "{{ postgres_test_user }}"
+            "POSTGRES_PASSWORD": "{{ postgres_test_password }}"
+            "POSTGRES_DB": "{{ postgres_test_db }}"
+          ports:
+            - "{{ postgres_test_port }}:5432"
+
+        redis:
+          image: "trophoria/trophoria-cache:latest"
+          container_name: "redis"
+          restart: unless-stopped
+          privileged: true
+          command: sh init-redis.sh {{ redis_password }}
+          networks:
+            - server_network
+          volumes:
+            - "{{ docker_dir }}/redis:/etc/redis"
+
+        achiever:
+          image: "trophoria/trophoria-api:latest"
+          container_name: "achiever"
+          restart: unless-stopped
+          environment:
+            "DATABASE_URL": "{{ database_url }}"
+            "REDIS_PASSWORD": "{{ redis_password }}"
+            "REDIS_PORT": "{{ redis_port }}"
+            "REDIS_TTL": "{{ redis_ttl }}"
+            "REDIS_HOST": "{{ redis_host }}"
+            "PORT": "{{ api_port }} "
+          labels:
+            traefik.enable: true
+            traefik.http.routers.achiever.entrypoints: web, websecure
+            traefik.http.routers.achiever.rule: Host("{{ root_host }}") # && PathPrefix("/achiever")
+            traefik.http.routers.achiever.tls: true
+            traefik.http.routers.achiever.tls.certresolver: production
+          networks:
+            - server_network
+          depends_on:
+              - redis
+              - postgres
+
+      networks:
+        server_network:
+          driver: bridge
