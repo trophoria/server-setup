@@ -62,6 +62,11 @@ fi
 
 # ssh-keygen -t ed25519 -C "tobi.kaerst@gmx.de"
 
+
+# ------ CONFIGURATION GUIDE  ------
+
+
+
 # ------ RUN THE PLAYBOOK ------
 
 echo
@@ -73,11 +78,23 @@ done
 
 if [[ "$launch_playbook" =~ ^[yY]$ ]]; then
   ansible-playbook run.yml
-else
-  echo "Still testing connections..."
-  ansible all -m ping
-  echo "You can run the playbook by executing the following command"
-  echo "ansible-playbook run.yml"
   exit
 fi
 
+echo
+read -p "Would you like to start only the services now? [y/N]: " launch_services
+until [[ "$launch_services" =~ ^[yYnN]*$ ]]; do
+				echo "$launch_services: invalid selection."
+				read -p "[y/N]: " launch_services
+done
+
+if [[ "$launch_services" =~ ^[yY]$ ]]; then
+  ansible-playbook run-services.yml
+  exit
+fi
+
+echo "Still testing connections..."
+ansible all -m ping
+echo "You can run the playbook by executing the following command"
+echo "ansible-playbook run.yml"
+exit
