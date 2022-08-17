@@ -22,10 +22,10 @@
       tags:
         - ufw
 
-    - role: ssh
-      tags:
-        - ssh
-
     - role: services
       tags:
         - services
+
+    - role: ssh
+      tags:
+        - ssh
