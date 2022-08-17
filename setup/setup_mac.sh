@@ -101,6 +101,11 @@ fi
 
 # ------ CONFIGURE SSH USER FOR FURTHER CONNECTIONS ------
 
-# Disable temp user/password authentication
+# Read username if already defined in inventory
+if [ -z "$username" ]; then
+    username=$(cat ansible/inventory.yml | grep "username:" | cut -c 15-)
+fi
+
+# isable temp user/password authentication
 sed "s/ansible_ssh_user:.*$/ansible_ssh_user: $username/g" inventory.yml > _inventory.yml && mv _inventory.yml inventory.yml
 sed "s/ansible_ssh_pass:.*$/ansible_ssh_private_key_file: ~\/.ssh\/trophoria_id/g" inventory.yml > _inventory.yml && mv _inventory.yml inventory.yml
