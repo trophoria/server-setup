@@ -49,7 +49,7 @@ If you want to contribute to our community projects, we advice you to fist read 
 This repository contains an ansible playbook which fully automatically configures a remote linux instance. If you want to improve it, just run the `setup` script and everything needed will be installed on your system. The setup will also ask you for your environment secrets.
 
 ```bash
-$ ./setup
+$ sh setup.sh
 ```
 
 If you don't want to skip through the setup every time, you can just run the playbook by it's own.
