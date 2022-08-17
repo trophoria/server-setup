@@ -6,6 +6,11 @@ all:
     ansible_ssh_user: {{ SSH_USER }}
     ansible_ssh_pass: {{ SSH_PASSWORD }}
 
+    # ZeroSSL environments
+    email: {{ SSL_EMAIL }}
+    zerossl_kid: {{ SSL_KID }}
+    zerossl_hmac: {{ SSL_HMAC }}    
+
     # Postgres environments
     postgres_port: 5432
     postgres_user: {{ POSTGRES_USER }}

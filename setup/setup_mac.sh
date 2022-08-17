@@ -62,9 +62,9 @@ if [ $? -eq 1 ]; then
 fi
 
 # run rhe inventory setup client
-keys=( "HOST_IP" "HOSTNAME" "SSH_USER" "SSH_PASSWORD" "SSH_PORT" "USERNAME" "USER_PASSWORD" "POSTGRES_USER" "POSTGRES_PASSWORD" "POSTGRES_TEST_USER" "POSTGRES_TEST_PASSWORD" "REDIS_PASSWORD")
-desc=( "Enter the ip adress of the remote server" "Enter the hostname of the remote server" "Enter your temporary/initial ssh user name" "Enter your temporary/initial ssh password" "Enter the desired ssh connection port" "Enter your desired UNIX username" "Enter your password of the UNIX user" "Enter the name of the postgres user" "Enter the password of the postgres database" "Enter the name of the postgres user for the test database" "Enter the password of the postgres user for the test database" "Enter the password of the redis server" )
-label=( "Host IP: " "Hostname: " "Temporary SSH Username: " "Temporary SSH Password: " "SSH port: " "UNIX Username: " "UNIX Password: " "Posgtres username: " "Postgres password: " "Postgres test username: " "Postgres test password: " "Redis password: " )
+keys=( "HOST_IP" "HOSTNAME" "SSH_USER" "SSH_PASSWORD" "SSH_PORT" "USERNAME" "USER_PASSWORD" "POSTGRES_USER" "POSTGRES_PASSWORD" "POSTGRES_TEST_USER" "POSTGRES_TEST_PASSWORD" "REDIS_PASSWORD" "SSL_EMAIL" "SSL_KID" "SSL_HMAC")
+desc=( "Enter the ip adress of the remote server" "Enter the hostname of the remote server" "Enter your temporary/initial ssh user name" "Enter your temporary/initial ssh password" "Enter the desired ssh connection port" "Enter your desired UNIX username" "Enter your password of the UNIX user" "Enter the name of the postgres user" "Enter the password of the postgres database" "Enter the name of the postgres user for the test database" "Enter the password of the postgres user for the test database" "Enter the password of the redis server" "Enter the email used for the ssl certificates" "Enter the kid token from zero ssl" "Enter the hmac token from zero ssl" )
+label=( "Host IP: " "Hostname: " "Temporary SSH Username: " "Temporary SSH Password: " "SSH port: " "UNIX Username: " "UNIX Password: " "Posgtres username: " "Postgres password: " "Postgres test username: " "Postgres test password: " "Redis password: " "SSL Email: " "SSL kid token: " "SSL hmac token: " )
 
 for (( i=0; i<${#keys[@]}; i++ ));
 do
