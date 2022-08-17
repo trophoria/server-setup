@@ -12,7 +12,7 @@
 
 - name: Deploy docker compopse stack
   docker_compose:
-    project_name: achiever-stack
+    project_name: trophoria-stack
     definition:
       version: '3'
       services:
@@ -27,6 +27,7 @@
             - server_network
           volumes:
             - /etc/traefik:/etc/traefik
+            - traefik-ssl-certs:/ssl-certs
             - /var/run/docker.sock:/var/run/docker.sock:ro
 
         watchtower:
@@ -59,7 +60,7 @@
             "POSTGRES_PASSWORD": "{{ postgres_test_password }}"
             "POSTGRES_DB": "{{ postgres_test_db }}"
           ports:
-            - "{{ postgres_test_port }}:5432"
+            - "5432:5432"
 
         redis:
           image: "trophoria/trophoria-cache:latest"
@@ -72,9 +73,9 @@
           volumes:
             - "{{ docker_dir }}/redis:/etc/redis"
 
-        achiever:
+        trophoria:
           image: "trophoria/trophoria-api:latest"
-          container_name: "achiever"
+          container_name: "trophoria"
           restart: unless-stopped
           environment:
             "DATABASE_URL": "{{ database_url }}"
@@ -85,15 +86,19 @@
             "PORT": "{{ api_port }} "
           labels:
             traefik.enable: true
-            traefik.http.routers.achiever.entrypoints: web, websecure
-            traefik.http.routers.achiever.rule: Host("{{ root_host }}") # && PathPrefix("/achiever")
-            traefik.http.routers.achiever.tls: true
-            traefik.http.routers.achiever.tls.certresolver: production
+            traefik.http.routers.trophoria.entrypoints: web, websecure
+            traefik.http.routers.trophoria.rule: Host("{{ root_host }}")
+            traefik.http.routers.trophoria.tls: true
+            traefik.http.routers.trophoria.tls.certresolver: zerossl
           networks:
             - server_network
           depends_on:
               - redis
               - postgres
+
+      volumes:
+        traefik-ssl-certs:
+          driver: local
 
       networks:
         server_network:

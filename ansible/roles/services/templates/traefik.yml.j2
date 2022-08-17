@@ -44,21 +44,17 @@ accesslog:
 ################################################################
 
 certificatesResolvers:
-  staging:
+  zerossl:
     acme:
-      email: tobi.kaerst@gmx.de
-      storage: /etc/traefik/certs/acme.json
-      caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      caServer: https://acme.zerossl.com/v2/DV90
+      email: {{ email }}
+      storage: /ssl-certs/acme.json
       httpChallenge:
         entryPoint: web
+      eab:
+        kid: {{ zerossl_kid }}
+        hmacEncoded: {{ zerossl_hmac }}
 
-  production:
-    acme:
-      email: tobi.kaerst@gmx.de
-      storage: /etc/traefik/certs/acme.json
-      caServer: "https://acme-v02.api.letsencrypt.org/directory"
-      httpChallenge:
-        entryPoint: web
 
 ################################################################
 # Docker configuration backend
